@@ -9,6 +9,7 @@ const ConsentDecisionHook = require("./controllers/patient-consent-consult");
 const Xacml = require("./controllers/xacml");
 const SLS = require("./controllers/sls");
 const SLSHook = require("./controllers/bundle-security-label");
+const ruleRouter = require("./routes/rules");
 
 const app = express();
 
@@ -28,6 +29,8 @@ app.post("/cds-services/patient-consent-consult", ConsentDecisionHook.post);
 app.post("/xacml", Xacml.post);
 app.post("/sls", SLS.post);
 app.post("/cds-services/bundle-security-label", SLSHook.post);
+
+app.use("/rules", ruleRouter);
 
 app.use(error);
 
