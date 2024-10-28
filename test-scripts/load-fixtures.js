@@ -16,7 +16,7 @@ function printUsageAndExit() {
 
 function getLeapIdentifer(resource) {
   return resource.identifier.filter(
-    identifier => identifier.system === LEAP_IDENTIFIER_SYSTEM
+    (identifier) => identifier.system === LEAP_IDENTIFIER_SYSTEM
   )[0].value;
 }
 
@@ -36,7 +36,7 @@ consentOrg.id = "theConsentOrg";
 actorOrg.id = "theActorOrg";
 consent.patient.reference = `Patient/${patient.id}`;
 consent.organization[0].reference = `Organization/${consentOrg.id}`;
-consent.provision.provision = consent.provision.provision.map(provision =>
+consent.provision.provision = consent.provision.provision.map((provision) =>
   _.set(
     _.cloneDeep(provision),
     "actor[0].reference.reference",
@@ -45,7 +45,7 @@ consent.provision.provision = consent.provision.provision.map(provision =>
 );
 consent.dateTime = new Date().toISOString();
 
-const entries = [patient, actorOrg, consentOrg, consent].map(resource => ({
+const entries = [patient, actorOrg, consentOrg, consent].map((resource) => ({
   fullUrl: "",
   resource: resource,
   request: {
@@ -70,9 +70,9 @@ superagent
   .post(FHIR_BASE)
   .set("Content-Type", "application/json")
   .send(transaction)
-  .then(res => {
+  .then((res) => {
     console.log(JSON.stringify(res.body, null, 2));
   })
-  .catch(err => {
+  .catch((err) => {
     console.log(err);
   });
