@@ -2,41 +2,43 @@ const _ = require("lodash");
 const fs = require("fs");
 const superagent = require("superagent");
 
-const FHIR_BASE = _.get(process.argv, "[2]");
+const FHIR_BASE = process.argv?.[2];
 
 const LEAP_IDENTIFIER_SYSTEM =
   "http://sdhealthconnect.github.io/leap/samples/ids";
 
 function printUsageAndExit() {
   console.error(
-    "Usage: node load-fixtures FHIR_BASE CONSENT_FILE (file name of the consent file in 'fixtures/consents/r4'"
+    "Usage: node load-fixtures [FHIR_BASE] [CONSENT_FILE_NAME] (path to consent file in 'fixtures/consents/r5'"
   );
   process.exit(1);
 }
 
 function getLeapIdentifer(resource) {
   return resource.identifier.filter(
-    identifier => identifier.system === LEAP_IDENTIFIER_SYSTEM
+    (identifier) => identifier.system === LEAP_IDENTIFIER_SYSTEM
   )[0].value;
 }
 
-const CONSENT_FILE = `../test/fixtures/consents/r4/${_.get(process.argv, "[3]")}`;
+const PATH = "../test/fixtures";
+
+const CONSENT_FILE = `${PATH}/consents/r5/${process.argv?.[3]}`;
 
 if (!FHIR_BASE || !CONSENT_FILE || !fs.existsSync(CONSENT_FILE)) {
   printUsageAndExit();
 }
 
-const patient = require("../test/fixtures/patients/patient-boris.json");
-const consentOrg = require("../test/fixtures/organizations/org-hl7.json");
-const actorOrg = require("../test/fixtures/organizations/org-good-health.json");
 const consent = require(CONSENT_FILE);
+const patient = require(`${PATH}/patients/patient-boris.json`);
+const consentOrg = require(`${PATH}/organizations/org-hl7.json`);
+const actorOrg = require(`${PATH}/organizations/org-good-health.json`);
 
 patient.id = "thePatient";
 consentOrg.id = "theConsentOrg";
 actorOrg.id = "theActorOrg";
-consent.patient.reference = `Patient/${patient.id}`;
-consent.organization[0].reference = `Organization/${consentOrg.id}`;
-consent.provision.provision = consent.provision.provision.map(provision =>
+consent.subject.reference = `Patient/${patient.id}`;
+consent.manager[0].reference = `Organization/${consentOrg.id}`;
+consent.provision = consent.provision.map((provision) =>
   _.set(
     _.cloneDeep(provision),
     "actor[0].reference.reference",
@@ -45,8 +47,8 @@ consent.provision.provision = consent.provision.provision.map(provision =>
 );
 consent.dateTime = new Date().toISOString();
 
-const entries = [patient, actorOrg, consentOrg, consent].map(resource => ({
-  fullUrl: "",
+const entries = [patient, actorOrg, consentOrg, consent].map((resource) => ({
+  fullUrl: `urn:uuid:${LEAP_IDENTIFIER_SYSTEM}:${getLeapIdentifer(resource)}`,
   resource: resource,
   request: {
     method: "PUT",
@@ -70,9 +72,9 @@ superagent
   .post(FHIR_BASE)
   .set("Content-Type", "application/json")
   .send(transaction)
-  .then(res => {
+  .then((res) => {
     console.log(JSON.stringify(res.body, null, 2));
   })
-  .catch(err => {
+  .catch((err) => {
     console.log(err);
   });
